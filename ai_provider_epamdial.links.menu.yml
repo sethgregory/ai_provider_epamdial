@@ -1,0 +1,6 @@
+ai_provider_epamdial.config:
+  title: 'EPAM DIAL Configuration'
+  description: 'Configure EPAM DIAL provider settings'
+  route_name: ai_provider_epamdial.config
+  parent: ai.admin_providers
+  weight: 10

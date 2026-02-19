@@ -1,0 +1,9 @@
+name: 'EPAM DIAL Provider'
+type: module
+description: 'Provides AI services integration for EPAM DIAL using dual authentication (Bearer JWT or Api-Key). Supports chat, embeddings, and other AI operations with 120+ models.'
+package: AI Providers
+core_version_requirement: ^10 || ^11
+configure: ai_provider_epamdial.config
+dependencies:
+  - ai:ai
+  - key:key
