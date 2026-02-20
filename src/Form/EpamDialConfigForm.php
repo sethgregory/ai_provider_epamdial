@@ -126,6 +126,13 @@ final class EpamDialConfigForm extends ConfigFormBase {
       ],
     ];
 
+    $form['override_capabilities'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Override Model Capabilities'),
+      '#description' => $this->t('When enabled, all models will be treated as capable of all operation types (chat, embeddings, vision, etc.). This is useful for testing or when the API doesn\'t properly advertise model capabilities. <strong>Warning:</strong> This may result in API errors if you try to use a model for an unsupported operation.'),
+      '#default_value' => $config->get('override_capabilities') ?: FALSE,
+    ];
+
     $form['troubleshooting'] = [
       '#type' => 'details',
       '#title' => $this->t('Troubleshooting'),
@@ -266,6 +273,7 @@ final class EpamDialConfigForm extends ConfigFormBase {
     $this->config('ai_provider_epamdial.settings')
       ->set('api_key', $form_state->getValue('api_key'))
       ->set('api_url', $api_url)
+      ->set('override_capabilities', $form_state->getValue('override_capabilities'))
       ->save();
 
     // Set default model for chat operations if none exists

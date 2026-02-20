@@ -11,3 +11,7 @@ ai_provider_epamdial.settings:
       type: string
       label: 'API Endpoint URL'
       description: 'The base URL for the EPAM DIAL API service'
+    override_capabilities:
+      type: boolean
+      label: 'Override Model Capabilities'
+      description: 'When enabled, all models will be treated as capable of all operation types'
