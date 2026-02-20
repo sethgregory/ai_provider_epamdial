@@ -75,21 +75,23 @@ class EpamDialProvider extends AiProviderClientBase implements ChatInterface {
           // Filter models based on operation type and capabilities
           if ($operation_type === 'embeddings') {
             if (!empty($model['capabilities']['embeddings'])) {
-              $models[$model['id']] = $model['display_name'] ?? $model['id'];
+              $models[$model['id']] = $this->generateDisplayName($model);
             }
           } elseif ($operation_type === 'chat') {
             // Assume chat capability if not explicitly defined or if chat is supported
-            if (empty($model['capabilities']) || !empty($model['capabilities']['chat']) || !empty($model['capabilities']['text_generation'])) {
-              $models[$model['id']] = $model['display_name'] ?? $model['id'];
+            if (empty($model['capabilities']) || !empty($model['capabilities']['chat']) || !empty($model['capabilities']['text_generation']) || !empty($model['capabilities']['chat_completion'])) {
+              $models[$model['id']] = $this->generateDisplayName($model);
             }
           } elseif ($operation_type === 'chat_with_image_vision') {
-            // Filter for vision-enabled models
-            if (!empty($model['capabilities']['vision']) || !empty($model['capabilities']['chat_with_image_vision'])) {
-              $models[$model['id']] = $model['display_name'] ?? $model['id'];
+            // Filter for vision-enabled models - include known vision models even without explicit capabilities
+            if (!empty($model['capabilities']['vision']) ||
+                !empty($model['capabilities']['chat_with_image_vision']) ||
+                preg_match('/^(gpt-4(?!-turbo-preview)|gpt-4o|gpt-4-vision|claude|gemini|anthropic\.)/i', $model['id'])) {
+              $models[$model['id']] = $this->generateDisplayName($model);
             }
           } else {
             // For other operation types or when no filter is specified
-            $models[$model['id']] = $model['display_name'] ?? $model['id'];
+            $models[$model['id']] = $this->generateDisplayName($model);
           }
         }
       }
@@ -385,5 +387,65 @@ class EpamDialProvider extends AiProviderClientBase implements ChatInterface {
     $this->systemMessage = $configuration['system_message'] ?? NULL;
   }
 
+  /**
+   * Generates an enhanced display name that distinguishes between model variants.
+   *
+   * @param array $model
+   *   The model data from the API.
+   *
+   * @return string
+   *   An enhanced display name that includes variant information.
+   */
+  private function generateDisplayName(array $model): string {
+    $display_name = $model['display_name'] ?? $model['id'];
+    $model_id = $model['id'];
+
+    // If the display name doesn't contain enough distinguishing information,
+    // enhance it with details from the model ID
+    $enhancements = [];
+
+    // Add reasoning capability
+    if (strpos($model_id, '-reasoning') !== false) {
+      $enhancements[] = 'Reasoning';
+    }
+
+    // Add thinking capability
+    if (strpos($model_id, '-with-thinking') !== false) {
+      $enhancements[] = 'Thinking';
+    }
+
+    // Add specific dates for version clarity
+    if (preg_match('/(\d{4}-\d{2}-\d{2})/', $model_id, $matches)) {
+      $date = $matches[1];
+      // Only add date if display name doesn't already contain it
+      if (strpos($display_name, $date) === false) {
+        $enhancements[] = $date;
+      }
+    }
+
+    // Add model type variants
+    if (strpos($model_id, '-codex') !== false && strpos($display_name, 'Codex') === false) {
+      $enhancements[] = 'Codex';
+    }
+
+    if (strpos($model_id, '-chat') !== false && strpos($display_name, 'Chat') === false) {
+      $enhancements[] = 'Chat';
+    }
+
+    // For VertexAI models, add the version info
+    if (preg_match('/@(\w+)$/', $model_id, $matches)) {
+      $version = $matches[1];
+      if ($version !== 'latest' && strpos($display_name, $version) === false) {
+        $enhancements[] = '@' . $version;
+      }
+    }
+
+    // Add enhancements to display name
+    if (!empty($enhancements)) {
+      $display_name .= ' (' . implode(', ', $enhancements) . ')';
+    }
+
+    return $display_name;
+  }
 
 }
